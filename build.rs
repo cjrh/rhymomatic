@@ -140,7 +140,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut qpt_allit_conso = qp_trie::Trie::new();
 
     // Sliding window to detect when
-    for x in &items[5000..5100] {
+    // for x in &items[5000..5100] {
+    for x in &items {
         let word = &x[0];
         let phonemes_fwd = x[1..].iter().map(|s| s.as_str()).collect::<Vec<_>>();
         // Remove emphasis
