@@ -6,7 +6,6 @@ pub fn make_rhymes() -> Vec<&'static str> {
 
 #[derive(structopt::StructOpt)]
 struct Args {
-    /// Address to listen on.
     #[structopt(short = "w", long = "word")]
     word: String,
 }
@@ -21,8 +20,6 @@ fn main(args: Args) {
         v.iter().take(3).map(|s| s.to_string()).collect::<Vec<_>>()
     );
     println!();
-    let f = std::fs::File::create("blah.txt");
-
     if let Err(e) = rhymomatic::get_rhymes(args.word) {
         eprintln!("Error: {}", &e);
         std::process::exit(1)
