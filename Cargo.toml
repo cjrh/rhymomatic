@@ -3,7 +3,7 @@ name = "rhymomatic"
 version = "0.1.0"
 authors = ["Caleb Hattingh <caleb.hattingh@gmail.com>"]
 edition = "2018"
-build = "build.rs"
+#build = "build2.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
