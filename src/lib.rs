@@ -47,8 +47,9 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 macro_rules! time_it {
     ($context:literal, $block:block) => {
         let timer = std::time::Instant::now();
-        $block
+        let tmp = $block;
         println!("{}: {:?}", $context, timer.elapsed());
+        tmp
     };
 }
 
@@ -60,10 +61,28 @@ const PAT_TEMPLATE_SUFFIX: &str = r"(?m)^(\S*)  (.*{})$";
 const PAT_TEMPLATE_PREFIX: &str = r"(?m)^(\S*)  ({}.*)$";
 const PAT_TEMPLATE_ANY: &str = r"(?m)^(\S*)  (.*{}.*)$";
 
-enum RhymeStyle {
+pub enum RhymeStyle {
     SYLLABIC,
     VOWEL,
     CONSONANT,
+}
+
+use std::str::FromStr;
+use std::string::ParseError;
+
+// TODO: apparently arg_enum! macro in structopt does all this
+//  for you.
+impl FromStr for RhymeStyle {
+    type Err = &'static str;
+    fn from_str(v: &str) -> std::result::Result<Self, Self::Err> {
+       match v {
+           "syllabic" => Ok(RhymeStyle::SYLLABIC),
+           "vowel" => Ok(RhymeStyle::VOWEL),
+           "consonant" => Ok(RhymeStyle::CONSONANT),
+           _ => Err("Could not parse the rhyme style"),
+           // _ => Err(std::convert::Infallible("hey"))
+       }
+    }
 }
 
 enum RhymeType {
@@ -92,6 +111,10 @@ fn output(v: &Vec<String>) {
 
 fn findem(s: &str, pat: &str) -> Vec<String> {
     let re = Regex::new(&pat).unwrap();
+    re.captures_iter(&s).map(|cap| cap[1].to_string()).collect()
+}
+
+fn findem_re(s: &str, re: &Regex) -> Vec<String> {
     re.captures_iter(&s).map(|cap| cap[1].to_string()).collect()
 }
 
@@ -169,6 +192,76 @@ fn find(
         println!("{:?}", &pat);
         result.extend(findem(DATA, &pat));
     };
+    result
+}
+
+fn find_onepass(
+    word: &str,
+    rhyme_style: RhymeStyle,
+    rhyme_type: RhymeType,
+    min_phonemes: usize,
+    keep_emphasis: bool,
+) -> Vec<String> {
+    let phoneme_list = findwordphonemes(DATA, word);
+    println!("{:?}", &phoneme_list);
+    let phonemes = phoneme_list.get(0).unwrap().clone();
+    println!("{:?}", &phonemes);
+
+    let match_phonemes = match rhyme_style {
+        RhymeStyle::SYLLABIC => phonemes.split_ascii_whitespace().map(|s| s.to_string()).collect(),
+        RhymeStyle::VOWEL => wild_consos(&phonemes, keep_emphasis),
+        RhymeStyle::CONSONANT => wild_vowels(&phonemes),
+    };
+    // let match_phonemes = wild_consos(phonemes, true);
+    println!("{:?}", &match_phonemes);
+
+    let n = match_phonemes.len();
+    let mut res = vec![];
+
+    for i in (min_phonemes..n).rev() {
+        let pat= match rhyme_type {
+            RhymeType::RHYME => {
+                PAT_TEMPLATE_SUFFIX.replace(
+                    "{}", &match_phonemes[n-i..].join(" ")
+                )
+            },
+            RhymeType::ALLITERATION => {
+                PAT_TEMPLATE_PREFIX.replace(
+                    "{}", &match_phonemes[..i].join(" ")
+                )
+            },
+            RhymeType::ANY => {
+                PAT_TEMPLATE_ANY.replace(
+                    // TODO: this needs more thinking
+                    "{}", &match_phonemes[n-i..].join(" ")
+                )
+            },
+        };
+        // let pat = pat_template.replace("{}", &match_phonemes.join(" "));
+        println!("{:?}", &pat);
+        let re = Regex::new(&pat).unwrap();
+        res.push(re);
+    };
+    println!("regexes: {:?}", res);
+
+
+    let mut result = vec![];
+    DATA
+        .lines()
+        .for_each(|l| {
+            res.iter().for_each(|re| {
+                let hits = findem_re(l, re);
+                let found = hits.len() > 0;
+                result.extend(hits);
+                if found {
+                    // Don't bother testing the other patterns, we already found a match.
+                    return
+                }
+            })
+        });
+
+    // result.extend(findem(DATA, &pat));
+
     result
 }
 
@@ -348,4 +441,12 @@ mod tests {
         let v = find(word, RhymeStyle::CONSONANT, RhymeType::RHYME, 4, true);
         println!("{:?}", v);
     }
+
+    #[test]
+    fn test_just_find_onepass() {
+        let word = "FOCUS";
+        let v = find_onepass(word, RhymeStyle::SYLLABIC, RhymeType::RHYME, 2, true);
+        println!("{:?}", v);
+    }
+
 }

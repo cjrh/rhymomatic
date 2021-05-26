@@ -8,6 +8,8 @@ pub fn make_rhymes() -> Vec<&'static str> {
 struct Args {
     #[structopt(short = "w", long = "word")]
     word: String,
+    #[structopt(short = "s", long = "style", default_value = "syllabic")]
+    rhyme_style: rhymomatic::RhymeStyle,
 }
 
 
