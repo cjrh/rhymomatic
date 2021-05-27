@@ -33,7 +33,7 @@ struct Args {
     min_phonemes: usize,
     /// This setting will disable the requirement to match the
     /// emphasis in the given word.
-    #[structopt(short = "e", long = "noemph")]
+    #[structopt(short = "n", long = "noemph")]
     noemph: bool,
 }
 
