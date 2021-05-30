@@ -81,10 +81,6 @@ arg_enum! {
 }
 
 pub fn get_rhymes(word: String) -> Result<()> {
-    time_it!("two printlines", {
-        println!("123");
-        println!("456");
-    });
     println!("{}", &DATA[..20]);
     Ok(())
 }
@@ -94,7 +90,7 @@ pub fn output(v: &Vec<String>) {
     let mut lock = out.lock();
     use std::io::Write;
     for s in v {
-        writeln!(lock, "{}", s).unwrap();
+        writeln!(lock, "{}", s.to_lowercase()).unwrap();
     }
 }
 
