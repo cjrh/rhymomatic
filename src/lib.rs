@@ -173,7 +173,7 @@ fn find(
             }
         };
         // let pat = pat_template.replace("{}", &match_phonemes.join(" "));
-        println!("{:?}", &pat);
+        // println!("{:?}", &pat);
         result.extend(findem(DATA, &pat));
     }
     result
@@ -331,7 +331,7 @@ mod tests {
         let word = "FOCUS";
         time_it!("find word", {
             let phonemes = findwordphonemes(DATA, word);
-            println!("{:?}", phonemes);
+            // println!("{:?}", phonemes);
             assert_eq!(phonemes, vec!["F OW1 K AH0 S"]);
         });
     }
