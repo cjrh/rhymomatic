@@ -1,5 +1,4 @@
 use regex::Regex;
-use std::fmt;
 use structopt::clap::arg_enum;
 
 //  Phoneme Example Translation
@@ -58,7 +57,7 @@ const DATA: &str = include_str!("cmudict-0.7b.utf8");
 const VOWEL: &'static [&'static str] = &[
     "AA", "AE", "AH", "AO", "AW", "AY", "EH", "ER", "EY", "IH", "IY", "OW", "OY", "UH", "UW",
 ];
-const PAT_TEMPLATE_SUFFIX: &str = r"(?m)^(\S*)  (.*{})$";
+const PAT_TEMPLATE_SUFFIX: &str = r"(?m)^(\[a-zA-ZS*)  (.*{})$";
 const PAT_TEMPLATE_PREFIX: &str = r"(?m)^(\S*)  ({}.*)$";
 const PAT_TEMPLATE_ANY: &str = r"(?m)^(\S*)  (.*{}.*)$";
 
@@ -139,9 +138,9 @@ fn find(
     keep_emphasis: bool,
 ) -> Vec<String> {
     let phoneme_list = findwordphonemes(DATA, word);
-    println!("{:?}", &phoneme_list);
+    // println!("{:?}", &phoneme_list);
     let phonemes = phoneme_list.get(0).unwrap().clone();
-    println!("{:?}", &phonemes);
+    // println!("{:?}", &phonemes);
 
     let match_phonemes = match rhyme_style {
         RhymeStyle::SYLLABIC => phonemes
@@ -152,7 +151,7 @@ fn find(
         RhymeStyle::CONSONANT => wild_vowels(&phonemes),
     };
     // let match_phonemes = wild_consos(phonemes, true);
-    println!("{:?}", &match_phonemes);
+    // println!("{:?}", &match_phonemes);
 
     let mut result = vec![];
     let n = match_phonemes.len();
@@ -187,9 +186,9 @@ pub fn find_onepass(
     keep_emphasis: bool,
 ) -> Vec<String> {
     let phoneme_list = findwordphonemes(DATA, &word.to_uppercase());
-    println!("{:?}", &phoneme_list);
+    // println!("{:?}", &phoneme_list);
     let phonemes = phoneme_list.get(0).unwrap().clone();
-    println!("{:?}", &phonemes);
+    // println!("{:?}", &phonemes);
 
     let match_phonemes = match rhyme_style {
         RhymeStyle::SYLLABIC => phonemes
@@ -200,7 +199,7 @@ pub fn find_onepass(
         RhymeStyle::CONSONANT => wild_vowels(&phonemes),
     };
     // let match_phonemes = wild_consos(phonemes, true);
-    println!("{:?}", &match_phonemes);
+    // println!("{:?}", &match_phonemes);
 
     let n = match_phonemes.len();
     let mut res = vec![];
@@ -222,11 +221,11 @@ pub fn find_onepass(
             }
         };
         // let pat = pat_template.replace("{}", &match_phonemes.join(" "));
-        println!("{:?}", &pat);
+        // println!("{:?}", &pat);
         let re = Regex::new(&pat).unwrap();
         res.push(re);
     }
-    println!("regexes: {:?}", res);
+    // println!("regexes: {:?}", res);
 
     let mut result = vec![];
     DATA.lines().for_each(|l| {
@@ -248,13 +247,13 @@ pub fn find_onepass(
 
 fn find_suffix_conso(target: &str) -> Vec<String> {
     let phoneme_list = findwordphonemes(DATA, target);
-    println!("{:?}", &phoneme_list);
+    // println!("{:?}", &phoneme_list);
     let phonemes = phoneme_list.get(0).unwrap();
-    println!("{:?}", &phonemes);
+    // println!("{:?}", &phonemes);
     let match_phonemes = wild_vowels(phonemes);
-    println!("{:?}", &match_phonemes);
+    // println!("{:?}", &match_phonemes);
     let pat = format!(r"(?m)^(\S*)  (.*{})$", match_phonemes.join(" "));
-    println!("{:?}", &pat);
+    // println!("{:?}", &pat);
     findem(DATA, &pat)
 }
 
@@ -305,7 +304,7 @@ fn wild_consos(phonemes: &str, keep_vowel_emph: bool) -> Vec<String> {
                 if !keep_vowel_emph {
                     num = r"\d?"
                 }
-                println!("{}-{}", pre, num);
+                // println!("{}-{}", pre, num);
                 format!(r"{}{}", pre, num)
             } else {
                 r"\S*".to_string()
