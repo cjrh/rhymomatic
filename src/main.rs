@@ -49,9 +49,4 @@ fn main(args: Args) {
     );
 
     rhymomatic::output(&results);
-
-    // if let Err(e) = rhymomatic::get_rhymes(args.word) {
-    //     eprintln!("Error: {}", &e);
-    //     std::process::exit(1)
-    // }
 }
