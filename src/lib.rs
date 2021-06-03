@@ -1,61 +1,220 @@
-use qp_trie::wrapper::BString;
+use regex::Regex;
+use structopt::clap::arg_enum;
 
+//  Phoneme Example Translation
+// ------- ------- -----------
+// AA	odd     AA D
+// AE	at	AE T
+// AH	hut	HH AH T
+// AO	ought	AO T
+// AW	cow	K AW
+// AY	hide	HH AY D
+// B 	be	B IY
+// CH	cheese	CH IY Z
+// D 	dee	D IY
+// DH	thee	DH IY
+// EH	Ed	EH D
+// ER	hurt	HH ER T
+// EY	ate	EY T
+// F 	fee	F IY
+// G 	green	G R IY N
+// HH	he	HH IY
+// IH	it	IH T
+// IY	eat	IY T
+// JH	gee	JH IY
+// K 	key	K IY
+// L 	lee	L IY
+// M 	me	M IY
+// N 	knee	N IY
+// NG	ping	P IH NG
+// OW	oat	OW T
+// OY	toy	T OY
+// P 	pee	P IY
+// R 	read	R IY D
+// S 	sea	S IY
+// SH	she	SH IY
+// T 	tea	T IY
+// TH	theta	TH EY T AH
+// UH	hood	HH UH D
+// UW	two	T UW
+// V 	vee	V IY
+// W 	we	W IY
+// Y 	yield	Y IY L D
+// Z 	zee	Z IY
+// ZH	seizure	S IY ZH ER
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
-type RhymeTrie = qp_trie::Trie<BString, String>;
 
 macro_rules! time_it {
-    ($context:literal, $s:stmt) => {
+    ($context:literal, $block:block) => {
         let timer = std::time::Instant::now();
-        $s
+        let tmp = $block;
         println!("{}: {:?}", $context, timer.elapsed());
+        tmp
     };
 }
 
-struct Tries {
-    allit: RhymeTrie,
-    allit_vowel: RhymeTrie,
-    allit_conso: RhymeTrie,
-    syllabic: RhymeTrie,
-    vowel: RhymeTrie,
-    conso: RhymeTrie,
-}
+const DATA: &str = include_str!("cmudict-0.7b.utf8");
+const VOWEL: &'static [&'static str] = &[
+    "AA", "AE", "AH", "AO", "AW", "AY", "EH", "ER", "EY", "IH", "IY", "OW", "OY", "UH", "UW",
+];
+// const PAT_TEMPLATE_SUFFIX: &str = r"(?m)^(\S*)  (.*{})$";
+const PAT_TEMPLATE_SUFFIX: &str = r"(?m)^([a-zA-Z-]*)\S*  (.*{})$";
+const PAT_TEMPLATE_PREFIX: &str = r"(?m)^(\S*)  ({}.*)$";
+const PAT_TEMPLATE_ANY: &str = r"(?m)^(\S*)  (.*{}.*)$";
 
-impl Tries {
-    fn new() -> Tries {
-        let bqpt_allit = include_bytes!(concat!(env!("OUT_DIR"), "/qpt_allit.bin"));
-        let bqpt_allit_vowel = include_bytes!(concat!(env!("OUT_DIR"), "/qpt_allit_vowel.bin"));
-        let bqpt_allit_conso = include_bytes!(concat!(env!("OUT_DIR"), "/qpt_allit_conso.bin"));
-        let bqpt_syllabic = include_bytes!(concat!(env!("OUT_DIR"), "/qpt_syllabic.bin"));
-        let bqpt_vowel = include_bytes!(concat!(env!("OUT_DIR"), "/qpt_vowel_only.bin"));
-        let bqpt_conso = include_bytes!(concat!(env!("OUT_DIR"), "/qpt_conso_only.bin"));
-
-        Tries {
-            allit: bincode::deserialize(bqpt_allit).unwrap(),
-            allit_vowel: bincode::deserialize(bqpt_allit_vowel).unwrap(),
-            allit_conso: bincode::deserialize(bqpt_allit_conso).unwrap(),
-            syllabic: bincode::deserialize(bqpt_syllabic).unwrap(),
-            vowel: bincode::deserialize(bqpt_vowel).unwrap(),
-            conso: bincode::deserialize(bqpt_conso).unwrap(),
-        }
+arg_enum! {
+    #[derive(PartialEq, Debug)]
+    pub enum RhymeStyle {
+        SYLLABIC,
+        VOWEL,
+        CONSONANT,
     }
 }
 
-pub fn get_rhymes(word: String) -> Result<()> {
-    // help for hashmap serialization: https://github.com/bincode-org/bincode/issues/230
-    time_it!("Load all tries",
-        let tries = Tries::new()
-    );
-    println!("{:?}", tries.syllabic.subtrie_str("IY-L-T"));
-    Ok(())
+arg_enum! {
+    #[derive(PartialEq, Debug)]
+    pub enum RhymeType {
+        RHYME,
+        ALLITERATION,
+        ANY,
+    }
 }
 
+pub fn output(v: &Vec<String>) {
+    let out = std::io::stdout();
+    let mut lock = out.lock();
+    use std::io::Write;
+    for s in v {
+        writeln!(lock, "{}", s.to_lowercase()).unwrap();
+    }
+}
+
+fn findem_re(s: &str, re: &Regex) -> Vec<String> {
+    re.captures_iter(&s).map(|cap| cap[1].to_string()).collect()
+}
+
+fn findwordphonemes(s: &str, word: &str) -> Vec<String> {
+    let pat = format!(r"(?m)^{}  (.*)$", word);
+    let re = Regex::new(&pat).unwrap();
+    re.captures_iter(&s).map(|cap| cap[1].to_string()).collect()
+}
+
+pub fn find_onepass(
+    word: &str,
+    rhyme_style: RhymeStyle,
+    rhyme_type: RhymeType,
+    min_phonemes: usize,
+    keep_emphasis: bool,
+) -> Vec<String> {
+    let phoneme_list = findwordphonemes(DATA, &word.to_uppercase());
+    println!("{:?}", &phoneme_list);
+    let phonemes = phoneme_list.get(0).unwrap().clone();
+    println!("{:?}", &phonemes);
+
+    let match_phonemes = match rhyme_style {
+        RhymeStyle::SYLLABIC => phonemes
+            .split_ascii_whitespace()
+            .map(|s| s.to_string())
+            .collect(),
+        RhymeStyle::VOWEL => wild_consos(&phonemes, keep_emphasis),
+        RhymeStyle::CONSONANT => wild_vowels(&phonemes),
+    };
+    // let match_phonemes = wild_consos(phonemes, true);
+    println!("{:?}", &match_phonemes);
+
+    let n = match_phonemes.len();
+    let mut res = vec![];
+
+    for i in (min_phonemes..n).rev() {
+        let pat = match rhyme_type {
+            RhymeType::RHYME => {
+                PAT_TEMPLATE_SUFFIX.replace("{}", &match_phonemes[n - i..].join(" "))
+            }
+            RhymeType::ALLITERATION => {
+                PAT_TEMPLATE_PREFIX.replace("{}", &match_phonemes[..i].join(" "))
+            }
+            RhymeType::ANY => {
+                PAT_TEMPLATE_ANY.replace(
+                    // TODO: this needs more thinking
+                    "{}",
+                    &match_phonemes[n - i..].join(" "),
+                )
+            }
+        };
+        // let pat = pat_template.replace("{}", &match_phonemes.join(" "));
+        println!("{:?}", &pat);
+        let re = Regex::new(&pat).unwrap();
+        res.push(re);
+    }
+    println!("regexes: {:?}", res);
+
+    let mut result = vec![];
+    DATA.lines().for_each(|l| {
+        res.iter().for_each(|re| {
+            let hits = findem_re(l, re);
+            let found = hits.len() > 0;
+            result.extend(hits);
+            if found {
+                // Don't bother testing the other patterns, we already found a match.
+                return;
+            }
+        })
+    });
+
+    result
+}
+
+fn wild_consos(phonemes: &str, keep_vowel_emph: bool) -> Vec<String> {
+    let pat = r"([AEIOU][A-Z]*)(\d?)";
+    let re = Regex::new(&pat).unwrap();
+    phonemes
+        .split_ascii_whitespace()
+        .map(|s| {
+            if let Some(caps) = re.captures(s) {
+                let pre = caps.get(1).unwrap().as_str();
+                let mut num = caps.get(2).unwrap().as_str();
+                if !keep_vowel_emph {
+                    num = r"\d?"
+                }
+                // println!("{}-{}", pre, num);
+                format!(r"{}{}", pre, num)
+            } else {
+                r"\S*".to_string()
+            }
+        })
+        .collect::<Vec<_>>()
+}
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn test_add() {
-        assert_eq!(add(1, 2), 3);
+    fn test_output() {
+        let v = vec!["a", "b", "c"];
+        let v = v.iter().map(|s| s.to_string()).collect();
+        output(&v);
+        assert_eq!(1, 1);
+    }
+
+    #[test]
+    fn test_just_find_onepass() {
+        let word = "FOCUS";
+        let v = find_onepass(word, RhymeStyle::SYLLABIC, RhymeType::RHYME, 2, true);
+        println!("{:?}", v);
+    }
+
+    #[test]
+    fn test_just_find_onepass_vowel() {
+        let word = "FOCUS";
+        let v = find_onepass(word, RhymeStyle::VOWEL, RhymeType::RHYME, 2, true);
+        println!("{:?}", v);
+    }
+
+    #[test]
+    fn test_just_find_onepass_conso() {
+        let word = "FOCUS";
+        let v = find_onepass(word, RhymeStyle::CONSONANT, RhymeType::RHYME, 2, true);
+        println!("{:?}", v);
     }
 }
