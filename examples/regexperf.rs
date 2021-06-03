@@ -1,5 +1,5 @@
-use std::fs::File;
 use regex::Regex;
+use std::fs::File;
 use std::io::Read;
 
 macro_rules! time_it {
@@ -30,9 +30,9 @@ fn findem(s: &str, target: &str) {
     let mut lock = out.lock();
     println!("{}", &pat);
     let re = Regex::new(&pat).unwrap();
-    use std::io::{Write};
+    use std::io::Write;
     for cap in re.captures_iter(&s) {
         // println!("{} {}", &cap[2], &cap[1]);
         writeln!(lock, "{} {}", &cap[2], &cap[1]);
-    };
+    }
 }

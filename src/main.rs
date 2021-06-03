@@ -1,4 +1,4 @@
-use rhymomatic::{RhymeStyle, RhymeType, find_onepass};
+use rhymomatic::{find_onepass, RhymeStyle, RhymeType};
 // include!(concat!(env!("OUT_DIR"), "/codegen.rs"));
 #[derive(structopt::StructOpt)]
 struct Args {
@@ -36,7 +36,6 @@ struct Args {
     #[structopt(short = "n", long = "noemph")]
     noemph: bool,
 }
-
 
 #[paw::main]
 fn main(args: Args) {
