@@ -147,7 +147,9 @@ pub fn find_onepass(
         let re = Regex::new(&pat).context("Unexpected regex compile error")?;
         res.push(re);
     }
+    println!("regexes:");
     res.iter().for_each(|r| println!("{:?}", &r));
+    println!();
     // println!("regexes: {:?}", res);
 
     let mut result = vec![];
@@ -157,10 +159,11 @@ pub fn find_onepass(
             let found = !hits.is_empty();
             result.extend(hits);
             if found {
-                Some(())
-            } else {
-                // Don't bother testing the other patterns, we already found a match.
+                // Don't bother testing the other regex patterns, we 
+                // already found a match.
                 None
+            } else {
+                Some(())
             }
         });
     });
