@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use regex::Regex;
 use structopt::clap::arg_enum;
 
@@ -97,10 +97,15 @@ pub fn find_onepass(
     rhyme_type: RhymeType,
     min_phonemes: usize,
     keep_emphasis: bool,
-) -> Vec<String> {
+) -> Result<Vec<String>> {
     let phoneme_list = findwordphonemes(DATA, &word.to_uppercase());
     println!("{:?}", &phoneme_list);
-    let phonemes = phoneme_list.get(0).unwrap().clone();
+    // If we found the given word in the data, extract that,
+    // otherwise return an error.
+    let phonemes = phoneme_list
+        .get(0)
+        .context(format!("The word '{}' was not found in the database.", &word))?
+        .clone();
     println!("{:?}", &phonemes);
 
     let match_phonemes = match rhyme_style {
@@ -135,10 +140,11 @@ pub fn find_onepass(
         };
         // let pat = pat_template.replace("{}", &match_phonemes.join(" "));
         println!("{:?}", &pat);
-        let re = Regex::new(&pat).unwrap();
+        let re = Regex::new(&pat).context("Unexpected regex compile error")?;
         res.push(re);
     }
-    println!("regexes: {:?}", res);
+    res.iter().for_each(|r| println!("{:?}", &r));
+    // println!("regexes: {:?}", res);
 
     let mut result = vec![];
     DATA.lines().for_each(|l| {
@@ -155,7 +161,7 @@ pub fn find_onepass(
         });
     });
 
-    result
+    Ok(result)
 }
 
 fn wild_consos(phonemes: &str, keep_vowel_emph: bool) -> Vec<String> {
