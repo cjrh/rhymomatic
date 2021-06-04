@@ -1,6 +1,6 @@
+use anyhow::Result;
 use regex::Regex;
 use structopt::clap::arg_enum;
-use anyhow::Result;
 
 //  Phoneme Example Translation
 // ------- ------- -----------
@@ -96,7 +96,7 @@ pub fn find_onepass(
     rhyme_style: RhymeStyle,
     rhyme_type: RhymeType,
     min_phonemes: usize,
-    keep_emphasis: bool
+    keep_emphasis: bool,
 ) -> Vec<String> {
     let phoneme_list = findwordphonemes(DATA, &word.to_uppercase());
     println!("{:?}", &phoneme_list);
@@ -142,18 +142,17 @@ pub fn find_onepass(
 
     let mut result = vec![];
     DATA.lines().for_each(|l| {
-        res.iter()
-            .try_for_each(|re| {
-                let hits = findem_re(l, re);
-                let found = !hits.is_empty();
-                result.extend(hits);
-                if found {
-                    Some(())
-                } else {
-                    // Don't bother testing the other patterns, we already found a match.
-                    None
-                }
-            });
+        res.iter().try_for_each(|re| {
+            let hits = findem_re(l, re);
+            let found = !hits.is_empty();
+            result.extend(hits);
+            if found {
+                Some(())
+            } else {
+                // Don't bother testing the other patterns, we already found a match.
+                None
+            }
+        });
     });
 
     result
@@ -197,7 +196,6 @@ fn wild_vowels(phonemes: &str) -> Vec<String> {
         })
         .collect::<Vec<_>>()
 }
-
 
 #[cfg(test)]
 mod tests {
