@@ -1,5 +1,6 @@
 use regex::Regex;
 use structopt::clap::arg_enum;
+use anyhow::Result;
 
 //  Phoneme Example Translation
 // ------- ------- -----------
@@ -42,19 +43,9 @@ use structopt::clap::arg_enum;
 // Y 	yield	Y IY L D
 // Z 	zee	Z IY
 // ZH	seizure	S IY ZH ER
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
-
-macro_rules! time_it {
-    ($context:literal, $block:block) => {
-        let timer = std::time::Instant::now();
-        let tmp = $block;
-        println!("{}: {:?}", $context, timer.elapsed());
-        tmp
-    };
-}
 
 const DATA: &str = include_str!("cmudict-0.7b.utf8");
-const VOWEL: &'static [&'static str] = &[
+const VOWEL: &[&str] = &[
     "AA", "AE", "AH", "AO", "AW", "AY", "EH", "ER", "EY", "IH", "IY", "OW", "OY", "UH", "UW",
 ];
 // const PAT_TEMPLATE_SUFFIX: &str = r"(?m)^(\S*)  (.*{})$";
