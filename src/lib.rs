@@ -71,6 +71,10 @@ arg_enum! {
     }
 }
 
+// This function is an optimized way of printing many
+// lines to the screen, because it locks stdout and 
+// doesn't flush the output buffer until the lock is
+// released.
 pub fn output(v: &[String]) -> Result<()> {
     let out = std::io::stdout();
     let mut lock = out.lock();
