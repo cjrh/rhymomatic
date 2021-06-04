@@ -59,6 +59,8 @@ Consider the pairing of `twitch` and `watch`: while not perfect rhymes, they
 are certainly close enough to use then in many situations, again such as
 song lyrics.
 
+### Alliteration
+
 Finally, consider searching for rhyming words that match _from the start_
 rather than at the end. This is like alliteration:
 
