@@ -185,6 +185,25 @@ fn wild_consos(phonemes: &str, keep_vowel_emph: bool) -> Vec<String> {
         .collect::<Vec<_>>()
 }
 
+fn wild_vowels(phonemes: &str) -> Vec<String> {
+    let pat = r"([AEIOU][A-Z]*)(\d?)";
+    let re = Regex::new(&pat).unwrap();
+    phonemes
+        .split_ascii_whitespace()
+        .map(|s| {
+            if let Some(caps) = re.captures(s) {
+                let pre = caps.get(1).unwrap().as_str();
+                let num = caps.get(2).unwrap().as_str();
+                println!("{}-{}", pre, num);
+                r"\S*".to_string()
+            } else {
+                s.to_string()
+            }
+        })
+        .collect::<Vec<_>>()
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
