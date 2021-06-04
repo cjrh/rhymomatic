@@ -45,9 +45,9 @@ use structopt::clap::arg_enum;
 // ZH	seizure	S IY ZH ER
 
 const DATA: &str = include_str!("cmudict-0.7b.utf8");
-const VOWEL: &[&str] = &[
-    "AA", "AE", "AH", "AO", "AW", "AY", "EH", "ER", "EY", "IH", "IY", "OW", "OY", "UH", "UW",
-];
+// const VOWEL: &[&str] = &[
+//     "AA", "AE", "AH", "AO", "AW", "AY", "EH", "ER", "EY", "IH", "IY", "OW", "OY", "UH", "UW",
+// ];
 // const PAT_TEMPLATE_SUFFIX: &str = r"(?m)^(\S*)  (.*{})$";
 const PAT_TEMPLATE_SUFFIX: &str = r"(?m)^([a-zA-Z-]*)\S*  (.*{})$";
 const PAT_TEMPLATE_PREFIX: &str = r"(?m)^(\S*)  ({}.*)$";
