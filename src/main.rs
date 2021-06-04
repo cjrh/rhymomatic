@@ -1,3 +1,4 @@
+use anyhow::Result;
 use rhymomatic::{find_onepass, RhymeStyle, RhymeType};
 // include!(concat!(env!("OUT_DIR"), "/codegen.rs"));
 #[derive(structopt::StructOpt)]
@@ -38,7 +39,7 @@ struct Args {
 }
 
 #[paw::main]
-fn main(args: Args) {
+fn main(args: Args) -> Result<()> {
     let results = find_onepass(
         &args.word,
         args.rhyme_style,
@@ -46,6 +47,6 @@ fn main(args: Args) {
         args.min_phonemes,
         !args.noemph,
     );
-
-    rhymomatic::output(&results);
+    rhymomatic::output(&results)?;
+    Ok(())
 }
