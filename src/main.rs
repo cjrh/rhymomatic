@@ -46,6 +46,7 @@ fn main(args: Args) -> Result<()> {
         args.rhyme_type,
         args.min_phonemes,
         !args.noemph,
+        None,
     )?;
     rhymomatic::output(&results)?;
     Ok(())

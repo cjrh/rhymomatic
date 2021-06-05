@@ -85,8 +85,13 @@ pub fn output(v: &[String]) -> Result<()> {
     Ok(())
 }
 
-fn findem_re(s: &str, re: &Regex) -> Vec<String> {
-    re.captures_iter(&s).map(|cap| cap[1].to_string()).collect()
+fn findem_re(s: &str, re: &Regex) -> Option<(String, String)> {
+    re.captures(&s).map(|caps|
+        (
+            caps[1].to_string(),
+            caps[2].to_string()
+        )
+    )
 }
 
 fn findwordphonemes(s: &str, word: &str) -> Vec<String> {
@@ -101,6 +106,7 @@ pub fn find_onepass(
     rhyme_type: RhymeType,
     min_phonemes: usize,
     keep_emphasis: bool,
+    bailout: Option<usize>,
 ) -> Result<Vec<String>> {
     let phoneme_list = findwordphonemes(DATA, &word.to_uppercase());
     println!("{:?}", &phoneme_list);
@@ -155,20 +161,27 @@ pub fn find_onepass(
     let mut result = vec![];
     DATA.lines().for_each(|l| {
         res.iter().try_for_each(|re| {
-            let hits = findem_re(l, re);
-            let found = !hits.is_empty();
-            result.extend(hits);
-            if found {
-                // Don't bother testing the other regex patterns, we 
-                // already found a match.
-                None
-            } else {
-                Some(())
+            match findem_re(l, re) {
+                Some(hit) => {
+                    result.push(hit.0);
+                    None
+                },
+                None => Some(())
             }
         });
     });
 
     Ok(result)
+}
+
+fn score(word_phonemes: &str, candidate_phonemes: &str) -> f64 {
+    // Rules: 
+    // 10: same number of phonemes 
+    // 9: same number of vowel phonemes
+    // 8: off by 1 phoneme
+    // 7: off by 2 phoneme
+
+    (word_phonemes.len() as i32 - candidate_phonemes.len() as i32).abs().into()
 }
 
 fn wild_consos(phonemes: &str, keep_vowel_emph: bool) -> Vec<String> {
@@ -224,21 +237,21 @@ mod tests {
     #[test]
     fn test_just_find_onepass() {
         let word = "FOCUS";
-        let v = find_onepass(word, RhymeStyle::Syllabic, RhymeType::Rhyme, 2, true);
+        let v = find_onepass(word, RhymeStyle::Syllabic, RhymeType::Rhyme, 2, true, None);
         println!("{:?}", v);
     }
 
     #[test]
     fn test_just_find_onepass_vowel() {
         let word = "FOCUS";
-        let v = find_onepass(word, RhymeStyle::Vowel, RhymeType::Rhyme, 2, true);
+        let v = find_onepass(word, RhymeStyle::Vowel, RhymeType::Rhyme, 2, true, None);
         println!("{:?}", v);
     }
 
     #[test]
     fn test_just_find_onepass_conso() {
         let word = "FOCUS";
-        let v = find_onepass(word, RhymeStyle::Consonant, RhymeType::Rhyme, 2, true);
+        let v = find_onepass(word, RhymeStyle::Consonant, RhymeType::Rhyme, 2, true, None);
         println!("{:?}", v);
     }
 }
