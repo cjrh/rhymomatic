@@ -163,7 +163,7 @@ pub fn find_onepass(
         res.iter().try_for_each(|re| {
             match findem_re(l, re) {
                 Some(hit) => {
-                    result.push(hit.0);
+                    result.push((hit.0, score(&phonemes, &hit.1)));
                     None
                 },
                 None => Some(())
@@ -171,17 +171,19 @@ pub fn find_onepass(
         });
     });
 
-    Ok(result)
+    result.sort_by_key(|tup| tup.1);
+    Ok(result.iter().map(|tup| tup.0.clone()).collect())
 }
 
-fn score(word_phonemes: &str, candidate_phonemes: &str) -> f64 {
+fn score(word_phonemes: &str, candidate_phonemes: &str) -> u32 {
     // Rules: 
     // 10: same number of phonemes 
     // 9: same number of vowel phonemes
     // 8: off by 1 phoneme
     // 7: off by 2 phoneme
-
-    (word_phonemes.len() as i32 - candidate_phonemes.len() as i32).abs().into()
+    let w = word_phonemes.split_ascii_whitespace().count() as i32;
+    let c = candidate_phonemes.split_ascii_whitespace().count() as i32;
+    (w - c).abs() as u32
 }
 
 fn wild_consos(phonemes: &str, keep_vowel_emph: bool) -> Vec<String> {
