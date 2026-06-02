@@ -1,0 +1,45 @@
+name: Release
+
+# Triggered by pushing a version tag, e.g. `cargo release` -> `git push --tags`.
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+*"
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  upload-assets:
+    name: ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+          - target: x86_64-apple-darwin
+            os: macos-latest
+          - target: aarch64-apple-darwin
+            os: macos-latest
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Builds rhymomatic, packages it as `rhymomatic-<target>.{tar.gz,zip}`
+      # with LICENSE and README included, and uploads it to the GitHub Release
+      # for the pushed tag (creating the release if needed). Cross-compiles
+      # Linux targets transparently via `cross`.
+      - uses: taiki-e/upload-rust-binary-action@v1
+        with:
+          bin: rhymomatic
+          target: ${{ matrix.target }}
+          include: LICENSE,README.md
+          archive: $bin-$target
+          token: ${{ secrets.GITHUB_TOKEN }}

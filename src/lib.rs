@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
+use clap::ValueEnum;
 use regex::Regex;
-use structopt::clap::arg_enum;
 
 //  Phoneme Example Translation
 // ------- ------- -----------
@@ -53,26 +53,22 @@ const PAT_TEMPLATE_SUFFIX: &str = r"(?m)^([a-zA-Z-]*)\S*  (.*{})$";
 const PAT_TEMPLATE_PREFIX: &str = r"(?m)^(\S*)  ({}.*)$";
 const PAT_TEMPLATE_ANY: &str = r"(?m)^(\S*)  (.*{}.*)$";
 
-arg_enum! {
-    #[derive(PartialEq, Debug)]
-    pub enum RhymeStyle {
-        Syllabic,
-        Vowel,
-        Consonant,
-    }
+#[derive(PartialEq, Debug, Clone, ValueEnum)]
+pub enum RhymeStyle {
+    Syllabic,
+    Vowel,
+    Consonant,
 }
 
-arg_enum! {
-    #[derive(PartialEq, Debug)]
-    pub enum RhymeType {
-        Rhyme,
-        Alliteration,
-        Any,
-    }
+#[derive(PartialEq, Debug, Clone, ValueEnum)]
+pub enum RhymeType {
+    Rhyme,
+    Alliteration,
+    Any,
 }
 
 // This function is an optimized way of printing many
-// lines to the screen, because it locks stdout and 
+// lines to the screen, because it locks stdout and
 // doesn't flush the output buffer until the lock is
 // released.
 pub fn output(v: &[String]) -> Result<()> {
@@ -86,12 +82,8 @@ pub fn output(v: &[String]) -> Result<()> {
 }
 
 fn findem_re(s: &str, re: &Regex) -> Option<(String, String)> {
-    re.captures(&s).map(|caps|
-        (
-            caps[1].to_string(),
-            caps[2].to_string()
-        )
-    )
+    re.captures(&s)
+        .map(|caps| (caps[1].to_string(), caps[2].to_string()))
 }
 
 fn findwordphonemes(s: &str, word: &str) -> Vec<String> {
@@ -114,7 +106,10 @@ pub fn find_onepass(
     // otherwise return an error.
     let phonemes = phoneme_list
         .get(0)
-        .context(format!("The word '{}' was not found in the database.", &word))?
+        .context(format!(
+            "The word '{}' was not found in the database.",
+            &word
+        ))?
         .clone();
     println!("{:?}", &phonemes);
 
@@ -160,14 +155,12 @@ pub fn find_onepass(
 
     let mut result = vec![];
     DATA.lines().for_each(|l| {
-        res.iter().try_for_each(|re| {
-            match findem_re(l, re) {
-                Some(hit) => {
-                    result.push((hit.0, score(&phonemes, &hit.1)));
-                    None
-                },
-                None => Some(())
+        res.iter().try_for_each(|re| match findem_re(l, re) {
+            Some(hit) => {
+                result.push((hit.0, score(&phonemes, &hit.1)));
+                None
             }
+            None => Some(()),
         });
     });
 
@@ -176,8 +169,8 @@ pub fn find_onepass(
 }
 
 fn score(word_phonemes: &str, candidate_phonemes: &str) -> u32 {
-    // Rules: 
-    // 10: same number of phonemes 
+    // Rules:
+    // 10: same number of phonemes
     // 9: same number of vowel phonemes
     // 8: off by 1 phoneme
     // 7: off by 2 phoneme
