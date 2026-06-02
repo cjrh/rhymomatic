@@ -17,14 +17,16 @@ regex = "1.12"
 anyhow = "1.0"
 
 # Tells `cargo binstall` where to find the prebuilt archives produced by the
-# release workflow. The tag is `v{version}`, and each archive is named
-# `{name}-{target}.{ext}` with the binary at its root.
+# release workflow. These must match the asset names uploaded by
+# taiki-e/upload-rust-binary-action exactly: `{name}-{target}.tar.gz` (or `.zip`
+# on Windows), under the `v{version}` tag, with the binary at the archive root.
 [package.metadata.binstall]
-pkg-url = "{ repo }/releases/download/v{ version }/{ name }-{ target }.{ archive-format }"
+pkg-url = "{ repo }/releases/download/v{ version }/{ name }-{ target }.tar.gz"
 pkg-fmt = "tgz"
 bin-dir = "{ bin }{ binary-ext }"
 
 [package.metadata.binstall.overrides.x86_64-pc-windows-msvc]
+pkg-url = "{ repo }/releases/download/v{ version }/{ name }-{ target }.zip"
 pkg-fmt = "zip"
 
 # Configuration for cargo-release (https://github.com/crate-ci/cargo-release).

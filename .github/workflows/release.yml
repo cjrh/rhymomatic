@@ -1,6 +1,6 @@
 name: Release
 
-# Triggered by pushing a version tag, e.g. `cargo release` -> `git push --tags`.
+# Triggered by pushing a version tag, which `cargo release` does for us.
 on:
   push:
     tags:
@@ -13,8 +13,20 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  # Turn the pushed git tag into an actual GitHub Release object. The upload
+  # jobs below attach assets to it; they cannot create it themselves, so this
+  # must run (and finish) first.
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: taiki-e/create-gh-release-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
   upload-assets:
     name: ${{ matrix.target }}
+    needs: create-release
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -33,9 +45,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       # Builds rhymomatic, packages it as `rhymomatic-<target>.{tar.gz,zip}`
-      # with LICENSE and README included, and uploads it to the GitHub Release
-      # for the pushed tag (creating the release if needed). Cross-compiles
-      # Linux targets transparently via `cross`.
+      # with LICENSE and README included, and attaches it to the release created
+      # above. Cross-compiles Linux targets transparently via `cross`.
       - uses: taiki-e/upload-rust-binary-action@v1
         with:
           bin: rhymomatic
