@@ -2,10 +2,43 @@
 name = "rhymomatic"
 version = "0.1.0"
 authors = ["Caleb Hattingh <caleb.hattingh@gmail.com>"]
-edition = "2018"
+edition = "2021"
+description = "A fast, phoneme-aware rhyme, alliteration, and assonance finder for the command line."
+repository = "https://github.com/cjrh/rhymomatic"
+homepage = "https://github.com/cjrh/rhymomatic"
+license = "Apache-2.0"
+readme = "README.md"
+keywords = ["rhyme", "phoneme", "cmudict", "cli", "poetry"]
+categories = ["command-line-utilities", "text-processing"]
 
 [dependencies]
-paw = "1.0.0"
-structopt = { version = "0.3.21", features = [ "paw" ] }
-regex = "1.5.3"
-anyhow = "1.0.40"
+clap = { version = "4.6", features = ["derive"] }
+regex = "1.12"
+anyhow = "1.0"
+
+# Tells `cargo binstall` where to find the prebuilt archives produced by the
+# release workflow. The tag is `v{version}`, and each archive is named
+# `{name}-{target}.{ext}` with the binary at its root.
+[package.metadata.binstall]
+pkg-url = "{ repo }/releases/download/v{ version }/{ name }-{ target }.{ archive-format }"
+pkg-fmt = "tgz"
+bin-dir = "{ bin }{ binary-ext }"
+
+[package.metadata.binstall.overrides.x86_64-pc-windows-msvc]
+pkg-fmt = "zip"
+
+# Configuration for cargo-release (https://github.com/crate-ci/cargo-release).
+#
+# Typical release:
+#     cargo release patch --execute      # 0.1.0 -> 0.1.1
+#     cargo release minor --execute      # 0.1.0 -> 0.2.0
+#
+# This bumps the version, commits it, creates the `vX.Y.Z` tag, publishes to
+# crates.io (so `cargo install rhymomatic` works), and pushes the commit and
+# tag. Pushing the tag triggers .github/workflows/release.yml, which builds the
+# cross-platform binaries that `cargo binstall rhymomatic` consumes.
+[package.metadata.release]
+tag-name = "v{{version}}"
+tag-message = "Release {{crate_name}} {{version}}"
+publish = true
+push = true
