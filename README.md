@@ -149,3 +149,32 @@ In the general sense, general rhyme can refer to various kinds of phonetic simil
     half rhyme (or slant rhyme): matching final consonants. (hand , lend)
     pararhyme: all consonants match. (tick, tock)
     alliteration (or head rhyme): matching initial consonants. (ship, short)
+
+## Cutting a release
+
+Releases are automated with [cargo-release](https://github.com/crate-ci/cargo-release).
+Its configuration lives in `[package.metadata.release]` in `Cargo.toml`.
+
+Prerequisites (one-time):
+
+- `cargo install cargo-release`
+- `cargo login` (a crates.io token, so the crate can be published)
+
+To cut a release, from a clean `main`:
+
+```console
+$ cargo release patch --execute   # 0.1.0 -> 0.1.1
+$ cargo release minor --execute   # 0.1.0 -> 0.2.0
+$ cargo release major --execute   # 0.1.0 -> 1.0.0
+```
+
+Omit `--execute` to see a dry run first. A single command then:
+
+1. Bumps the version in `Cargo.toml` and commits it.
+2. Publishes the crate to crates.io (so `cargo install rhymomatic` works).
+3. Creates a `vX.Y.Z` git tag and pushes the commit and tag.
+
+Pushing the tag triggers the [release workflow](.github/workflows/release.yml),
+which cross-compiles the binary for Linux, macOS, and Windows, creates the
+matching GitHub Release, and uploads the archives. Those archives are what
+`cargo binstall rhymomatic` downloads.
